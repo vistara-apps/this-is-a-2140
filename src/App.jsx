@@ -6,7 +6,9 @@ import RightsGuide from './components/RightsGuide';
 import Scripts from './components/Scripts';
 import Recording from './components/Recording';
 import Onboarding from './components/Onboarding';
+import EncounterCardGenerator from './components/EncounterCardGenerator';
 import { UserProvider } from './context/UserContext';
+import { SubscriptionProvider } from './context/SubscriptionContext';
 
 function App() {
   const [currentView, setCurrentView] = useState('dashboard');
@@ -49,6 +51,8 @@ function App() {
         return <Scripts user={user} />;
       case 'recording':
         return <Recording user={user} />;
+      case 'encounter-cards':
+        return <EncounterCardGenerator user={user} onClose={() => setCurrentView('dashboard')} />;
       default:
         return <Dashboard user={user} onNavigate={setCurrentView} />;
     }
@@ -56,16 +60,18 @@ function App() {
 
   return (
     <UserProvider value={{ user, setUser }}>
-      <div className="min-h-screen bg-bg">
-        <Header 
-          currentView={currentView} 
-          onNavigate={setCurrentView}
-          user={user}
-        />
-        <main className="pb-20">
-          {renderCurrentView()}
-        </main>
-      </div>
+      <SubscriptionProvider>
+        <div className="min-h-screen bg-bg">
+          <Header 
+            currentView={currentView} 
+            onNavigate={setCurrentView}
+            user={user}
+          />
+          <main className="pb-20">
+            {renderCurrentView()}
+          </main>
+        </div>
+      </SubscriptionProvider>
     </UserProvider>
   );
 }

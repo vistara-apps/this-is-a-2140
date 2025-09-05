@@ -1,53 +1,23 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, Share, BookOpen } from 'lucide-react';
-
-const getRightsData = (state) => {
-  return {
-    overview: [
-      "You have the right to remain silent",
-      "You have the right to refuse searches without a warrant",
-      "You have the right to an attorney",
-      "You have the right to know why you're being stopped"
-    ],
-    traffic: [
-      "Keep hands visible on steering wheel",
-      "Provide license, registration, and insurance when requested",
-      "You may ask if you're free to leave",
-      "Field sobriety tests may be refused (consequences vary by state)"
-    ],
-    encounter: [
-      "Stay calm and keep hands visible",
-      "Do not resist, even if you believe the stop is unfair",
-      "Ask 'Am I free to leave?' if unclear about detention",
-      "Request a lawyer before answering questions"
-    ],
-    stateSpecific: state === 'California' ? [
-      "Body cameras required for traffic stops in many jurisdictions",
-      "Cannabis possession under 1 oz is legal for adults 21+",
-      "Must provide ID only if lawfully detained"
-    ] : state === 'Texas' ? [
-      "Open carry permitted with license for handguns",
-      "Must identify yourself if lawfully arrested",
-      "DWI penalties include mandatory license suspension"
-    ] : [
-      `Specific laws for ${state} - consult local legal resources`,
-      "General constitutional rights apply",
-      "Consider consulting a local attorney for state-specific guidance"
-    ]
-  };
-};
+import { ChevronDown, ChevronRight, Share, BookOpen, Shield, AlertCircle } from 'lucide-react';
+import { getStateRights, hasComprehensiveData, getRecordingLaws, getIdentificationLaws } from '../utils/legalDataManager';
 
 const InteractiveGuideCard = ({ state, preview = false, onExpand }) => {
   const [expanded, setExpanded] = useState(false);
   const [activeSection, setActiveSection] = useState('overview');
   
-  const rightsData = getRightsData(state);
+  const rightsData = getStateRights(state);
+  const isComprehensive = hasComprehensiveData(state);
+  const recordingLaws = getRecordingLaws(state);
+  const idLaws = getIdentificationLaws(state);
 
   const sections = [
-    { id: 'overview', title: 'Your Rights', icon: BookOpen },
+    { id: 'overview', title: 'Your Rights', icon: Shield },
     { id: 'traffic', title: 'Traffic Stops', icon: BookOpen },
     { id: 'encounter', title: 'Police Encounters', icon: BookOpen },
-    { id: 'stateSpecific', title: `${state} Specific`, icon: BookOpen }
+    { id: 'stateSpecific', title: `${state} Specific`, icon: AlertCircle },
+    { id: 'recording', title: 'Recording Laws', icon: BookOpen },
+    { id: 'identification', title: 'ID Requirements', icon: BookOpen }
   ];
 
   const handleShare = () => {
@@ -68,7 +38,18 @@ const InteractiveGuideCard = ({ state, preview = false, onExpand }) => {
     return (
       <div className="bg-surface rounded-lg p-4 border border-gray-700 cursor-pointer" onClick={onExpand}>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-white font-semibold">Your Rights in {state}</h3>
+          <div className="flex items-center space-x-2">
+            <h3 className="text-white font-semibold">Your Rights in {state}</h3>
+            {isComprehensive ? (
+              <div className="bg-accent/20 text-accent px-2 py-1 rounded-full text-xs">
+                Comprehensive
+              </div>
+            ) : (
+              <div className="bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded-full text-xs">
+                Generic
+              </div>
+            )}
+          </div>
           <ChevronRight className="w-5 h-5 text-gray-400" />
         </div>
         <div className="space-y-2">
@@ -120,12 +101,48 @@ const InteractiveGuideCard = ({ state, preview = false, onExpand }) => {
       {/* Content */}
       <div className="p-4">
         <div className="space-y-3">
-          {rightsData[activeSection].map((item, index) => (
-            <div key={index} className="flex items-start space-x-3">
-              <div className="w-2 h-2 bg-accent rounded-full mt-2 flex-shrink-0"></div>
-              <p className="text-gray-300">{item}</p>
+          {activeSection === 'recording' ? (
+            <div className="space-y-3">
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 bg-accent rounded-full mt-2 flex-shrink-0"></div>
+                <div>
+                  <p className="text-gray-300">
+                    <strong>Legal:</strong> {recordingLaws.legal ? 'Yes' : 'No'}
+                  </p>
+                  <p className="text-gray-400 text-sm mt-1">{recordingLaws.restrictions}</p>
+                </div>
+              </div>
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 bg-accent rounded-full mt-2 flex-shrink-0"></div>
+                <p className="text-gray-300">{recordingLaws.notes}</p>
+              </div>
             </div>
-          ))}
+          ) : activeSection === 'identification' ? (
+            <div className="space-y-3">
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 bg-accent rounded-full mt-2 flex-shrink-0"></div>
+                <div>
+                  <p className="text-gray-300">
+                    <strong>Required:</strong> {idLaws.required ? 'Yes' : 'No'}
+                  </p>
+                  <p className="text-gray-400 text-sm mt-1">{idLaws.conditions}</p>
+                </div>
+              </div>
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 bg-accent rounded-full mt-2 flex-shrink-0"></div>
+                <p className="text-gray-300">
+                  <strong>Penalty for refusal:</strong> {idLaws.penalty}
+                </p>
+              </div>
+            </div>
+          ) : (
+            rightsData[activeSection]?.map((item, index) => (
+              <div key={index} className="flex items-start space-x-3">
+                <div className="w-2 h-2 bg-accent rounded-full mt-2 flex-shrink-0"></div>
+                <p className="text-gray-300">{item}</p>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
